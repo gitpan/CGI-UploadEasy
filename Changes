@@ -3,3 +3,6 @@ Version history for CGI::UploadEasy.
 v0.10 (Mar 31, 2005)
     Initial release.
 
+v0.11 (April 2, 2005)
+    Fixed bug in the otherparam() method.
+

@@ -6,8 +6,8 @@ use warnings;
 use CGI 2.76;
 use File::Spec;
 
-our $VERSION = '0.10';
-# $Id: UploadEasy.pm,v 1.1.1.1 2005/03/31 15:21:01 gunnarh Exp $
+our $VERSION = '0.11';
+# $Id: UploadEasy.pm,v 1.3 2005/04/02 13:35:24 gunnarh Exp $
 
 =head1 NAME
 
@@ -82,8 +82,8 @@ argument.
 =item B<-maxsize>
 
 Specifies the maximum size in KiB (kibibytes) of a POST request data set.
--maxsize is 1,000 KiB by default. To disable this ceiling for POST requests,
-give -maxsize a negative value.
+Default limit is 1,000 KiB. To disable this ceiling for POST requests, set a
+negative -maxsize value.
 
 =back
 
@@ -139,7 +139,7 @@ sub otherparam {
     if ( @_ ) { die "The 'otherparam' method does not take arguments--use ",
       "CGI.pm's 'param' method to access values at $file line $line.\n" }
     my $cgi = $self->{cgi};
-    grep { ! ref $cgi->param($_) and $cgi->param($_) } $cgi->param;
+    grep { ! ref $cgi->param($_) and grep length, $cgi->param($_) } $cgi->param;
 }
 
 =over 4
@@ -147,7 +147,7 @@ sub otherparam {
 =item B<$ue-E<gt>otherparam>
 
 The B<otherparam()> method returns a list of parameter names representing
-POSTed data besides uploaded files. To access the values, use L<CGI.pm's|CGI>
+POSTed data besides uploaded files. To access the values, use L<CGI.pm|CGI>'s
 B<param()> method.
 
 =back

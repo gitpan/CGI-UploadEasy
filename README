@@ -1,4 +1,4 @@
-CGI-UploadEasy version 0.10
+CGI-UploadEasy version 0.11
 ===========================
 
 CGI::UploadEasy is a wrapper around, and relies heavily on, CGI.pm.

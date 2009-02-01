@@ -1,4 +1,4 @@
-CGI-UploadEasy version 0.11
+CGI-UploadEasy version 1.00
 ===========================
 
 CGI::UploadEasy is a wrapper around, and relies heavily on, CGI.pm.
@@ -30,7 +30,7 @@ This module requires these other modules:
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2005 by Gunnar Hjalmarsson
+Copyright (C) 2005-2009 by Gunnar Hjalmarsson
 
 This module is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

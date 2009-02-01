@@ -5,9 +5,12 @@ use strict;
 use warnings;
 use CGI 2.76;
 use File::Spec;
+use Carp;
 
-our $VERSION = '0.11';
-# $Id: UploadEasy.pm,v 1.3 2005/04/02 13:35:24 gunnarh Exp $
+$Carp::CarpLevel = 1;
+
+our $VERSION = '1.00';
+# $Id: UploadEasy.pm,v 1.8 2009/02/01 21:04:22 gunnarh Exp $
 
 =head1 NAME
 
@@ -16,7 +19,7 @@ CGI::UploadEasy - Facilitate file uploads
 =head1 SYNOPSIS
 
     use CGI::UploadEasy;
-    my $ue = CGI::UploadEasy->new(-uploaddir => '/path/to/upload/directory');
+    my $ue = CGI::UploadEasy->new(-uploaddir => '/path/to/upload/dir');
     my $cgi = $ue->cgiobject;
     my $info = $ue->fileinfo;
 
@@ -39,7 +42,7 @@ sub new {
     my $class = shift;
     my $self = {
         maxsize => 1000,
-        _argscheck( \@_ ),
+        &_argscheck,
     };
 
     $CGI::POST_MAX = $self->{maxsize} * 1024;
@@ -115,9 +118,7 @@ instead. Example:
 
 sub fileinfo {
     my $self = shift;
-    my ($file, $line) = (caller)[1,2];
-    if ( @_ ) { die "The 'fileinfo' method does not take arguments ",
-      "at $file line $line.\n" }
+    if ( @_ ) { croak "The 'fileinfo' method does not take arguments" }
     $self->{files};
 }
 
@@ -135,52 +136,50 @@ e.g. MIME type and file size as criteria for how to further process the files.
 
 sub otherparam {
     my $self = shift;
-    my ($file, $line) = (caller)[1,2];
-    if ( @_ ) { die "The 'otherparam' method does not take arguments--use ",
-      "CGI.pm's 'param' method to access values at $file line $line.\n" }
+    if ( @_ ) { croak "The 'otherparam' method does not take arguments",
+      "--use CGI.pm's 'param' method to access values" }
     my $cgi = $self->{cgi};
-    grep { ! ref $cgi->param($_) and grep length, $cgi->param($_) } $cgi->param;
+    grep ! ref $cgi->param($_), $cgi->param;
 }
 
 =over 4
 
 =item B<$ue-E<gt>otherparam>
 
-The B<otherparam()> method returns a list of parameter names representing
-POSTed data besides uploaded files. To access the values, use L<CGI.pm|CGI>'s
-B<param()> method.
+The B<otherparam()> method returns a list of parameter names besides the names
+of the file select controls that were used for file uploads. To access the values,
+use L<CGI.pm|CGI>'s B<param()> method.
 
 =back
 
 =cut
 
 sub _argscheck {
-    my $ref = shift;
     my %args;
     my %names = (
         -uploaddir => 'uploaddir',
         -tempdir   => 'tempdir',
         -maxsize   => 'maxsize',
     );
-    my $context = sprintf 'at %s line %s', (caller 1)[1,2];
+    local $Carp::CarpLevel = 2;
 
-    @$ref % 2 == 0 and @$ref > 0 or die 'One or more name=>argument pairs are '
-     . "expected at the creation of the CGI::UploadEasy object $context.\n";
+    @_ % 2 == 0 and @_ > 0 or croak 'One or more name=>argument pairs are ',
+      'expected at the creation of the CGI::UploadEasy object';
 
-    while ( local $_ = shift @$ref ) {
-        my $name = lc;
-        $names{$name} or die "Unknown argument: '$_' $context.\n";
-        $args{ $names{$name} } = shift @$ref;
+    while ( my $arg = shift ) {
+        my $name = lc $arg;
+        $names{$name} or croak "Unknown argument: '$arg'";
+        $args{ $names{$name} } = shift;
     }
-    $args{uploaddir} or die "The compulsory argument '-uploaddir' is missing $context.\n";
+    $args{uploaddir} or croak "The compulsory argument '-uploaddir' is missing";
 
     for my $dir ( @args{ grep exists $args{$_}, qw/uploaddir tempdir/ } ) {
-        -d $dir or die "Can't find any directory '$dir' $context.\n";
-        -r $dir and -w _ and -x _ or die 'The user this script runs as '
-         . "does not have write access to '$dir' $context.\n";
+        -d $dir or croak "Can't find any directory '$dir'";
+        -r $dir and -w _ and -x _ or croak 'The user this script runs as ',
+          "does not have write access to '$dir'";
     }
-    $args{maxsize} and $args{maxsize} !~ /^-?\d+$/ and die "The '-maxsize' argument "
-     . "shall be an integer $context.\n";
+    $args{maxsize} and $args{maxsize} !~ /^-?\d+$/
+      and croak "The '-maxsize' argument shall be an integer";
 
     %args;
 }
@@ -256,7 +255,7 @@ upload directory and printing the related info:
     use warnings;
     use CGI::UploadEasy;
     use Data::Dumper;
-    my $ue = CGI::UploadEasy->new(-uploaddir => '/path/to/upload/directory');
+    my $ue = CGI::UploadEasy->new(-uploaddir => '/path/to/upload/dir');
     my $info = $ue->fileinfo;
     my $cgi = $ue->cgiobject;
     print $cgi->header('text/plain');
@@ -275,7 +274,7 @@ C<CGI::UploadEasy> object.
 
 =head1 AUTHOR, COPYRIGHT AND LICENSE
 
-  Copyright © 2005 Gunnar Hjalmarsson
+  Copyright (c) 2005-2009 Gunnar Hjalmarsson
   http://www.gunnar.cc/cgi-bin/contact.pl
 
 This module is free software; you can redistribute it and/or modify it
